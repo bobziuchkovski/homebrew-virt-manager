@@ -1,11 +1,13 @@
 class VirtViewer < Formula
   desc "App for virtualized guest interaction"
   homepage "https://virt-manager.org/"
-  url "https://releases.pagure.org/virt-viewer/virt-viewer-9.0.tar.gz"
-  sha256 "91b43383a0bd4cf3173269e674d65fd205f7c34bc5a8cb4fb3640deb7f1d4825"
+  url "https://releases.pagure.org/virt-viewer/virt-viewer-10.0.tar.xz"
+  sha256 "d23bc0a06e4027c37b8386cfd0286ef37bd738977153740ab1b6b331192389c5"
 
   depends_on "intltool" => :build
   depends_on "libtool" => :build
+  depends_on "meson" => :build
+  depends_on "ninja" => :build
   depends_on "pkg-config" => :build
 
   depends_on "atk"
@@ -24,15 +26,16 @@ class VirtViewer < Formula
   depends_on "spice-protocol"
 
   def install
-    args = %W[
-      --disable-silent-rules
-      --disable-update-mimedb
-      --with-gtk-vnc
-      --with-spice-gtk
-      --prefix=#{prefix}
-    ]
-    system "./configure", *args
-    system "make", "install"
+    mkdir "build" do
+      system "meson", *std_meson_args,
+                      "-Dlibvirt=enabled",
+                      "-Dspice=enabled",
+                      "-Dvnc=enabled",
+                      ".."
+      system "ninja", "-v"
+      system "ninja", "install", "-v"
+      (share/"mime").rmtree
+    end
   end
 
   def post_install
